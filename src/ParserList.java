@@ -6,8 +6,8 @@ import java.util.List;
 public class ParserList {
     String[] parseRequirements = { "Course Name",
             "Course Year",
-            "Version",
-            "end"
+            "Version Code",
+            "File_end"
     };
 
     List<String> parseList;
