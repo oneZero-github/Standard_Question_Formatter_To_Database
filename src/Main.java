@@ -1,7 +1,6 @@
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
+import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
@@ -10,6 +9,7 @@ public class Main {
     private static final int isFile = 2;
     private static final int isError = 3;
     private static File textFile;
+    private  static List<Question> questionList;
 
 
     public static void main(String[] args) {
@@ -25,10 +25,14 @@ public class Main {
         //for now main will serve as the GUI
 
         setUpInterface();
-        askUserForFile();
+        try{
+            askUserForFile();
+        }catch (IOException e){
+            e.printStackTrace();
+        }
     }
 
-    private static void askUserForFile() {
+    private static void askUserForFile() throws IOException {
         Scanner userInput = new Scanner(System.in);
         System.out.println("Please input the path of the text file of questions   >");
         String filePath = userInput.nextLine();
@@ -55,7 +59,7 @@ public class Main {
 
     }
 
-    private static void formatFromDirectory(File textFile) {
+    private static void formatFromDirectory(File textFile) throws IOException {
         //iterate through directory and display only textFiles
         List<File> textFilesList = new ArrayList<>();
         File[] fileList = textFile.listFiles();
@@ -80,7 +84,7 @@ public class Main {
         }
     }
 
-    private static void formatFromFile(File textFile) {
+    private static void formatFromFile(File textFile) throws IOException {
         String file_name = textFile.getName();
         System.out.println();
         Scanner scanner = new Scanner(System.in);
@@ -112,14 +116,13 @@ public class Main {
 
             // if scanning is successful, then continue with code
             int modal_number_of_options;
-            while(true){
+            while (true) {
                 System.out.println("Please input the modal number of options per question >>>");
                 userInput = scanner.nextLine();
-                if(userInput.matches("[2-6]")) {
+                if (userInput.matches("[2-6]")) {
                     modal_number_of_options = Integer.parseInt(userInput);
                     break;
-                }
-                else System.err.println("\n" + "The input \"" + userInput +
+                } else System.err.println("\n" + "The input \"" + userInput +
                         "\" is invalid, try again");
             }
 
@@ -133,15 +136,18 @@ public class Main {
 
             int line_count = 3;
             boolean file_reached_end = false;
+
+            questionList = new ArrayList<>();
+
             while (((readLine = reader.readLine()) != null) && !file_reached_end) {
                 line_count++;
-                if(! (readLine.length() < 2)) // if the length of the line read is less than 2, then skip,
-                    if(!readLine.equalsIgnoreCase("file_end")){
-                        parseQuestionFromLine(readLine,line_count, modal_number_of_options);
-                    }else file_reached_end = true;
+                if (!(readLine.length() < 2)) // if the length of the line read is less than 2, then skip,
+                    if (!readLine.equalsIgnoreCase("file_end")) {
+                        parseQuestionFromLine(readLine, line_count, modal_number_of_options);
+                    } else file_reached_end = true;
 
             }
-            System.out.println(file_name + " formatted successfully.\n " + "End of file reached = " + file_reached_end );
+            System.out.println(file_name + " formatted successfully.\n " + "End of file reached = " + file_reached_end);
 
         } catch (IncompatibleFileException e) {
             e.printStackTrace();
@@ -150,55 +156,70 @@ public class Main {
             String placeholder = sc.nextLine();
             System.err.println("Ensure all parameters are satisfied");
 
-        }
-        catch (IncompatibleQuestionException e){
+        } catch (IncompatibleQuestionException e) {
             e.printStackTrace();
+            String dialogQuestion = "Do you want to rewrite the file using the successfully parsed questions\n" +
+                    "This saves changes from smart fix\nPress 1 for yes\n 2 for no";
 
-        }
-        catch (Exception e) {
+                while (true) {
+                    System.out.println(dialogQuestion);
+                    userInput = scanner.nextLine();
+                    if (userInput.matches("[1-2]")) {
+                        if(userInput.equals("1")) saveChangesAndRewriteFile();
+                           break;
+                    } else System.err.println("\n" + "The input \"" + userInput +
+                            "\" is invalid, try again");
+                }
+
+        } catch (Exception e) {
             System.out.println("Oops, an error has occurred,  see stack trace below");
             e.printStackTrace();
         }
     }
 
-    private static void parseQuestionFromLine(String readLine, int line_count, int modal_question_count) throws IncompatibleQuestionException{
+
+
+
+    private static void parseQuestionFromLine(String readLine, int line_count, int modal_question_count)
+            throws IncompatibleQuestionException {
         Scanner questionParser = new Scanner(readLine);
         //readLine should be a question, all questions should start with a number
         int q_number = 0;
-        String number =questionParser.next();
-        if(number.contains(".")) number =  number.replace(".", ""); // e.g 4. A Boy.. will turn to just 4
+        String number = questionParser.next();
+        if (number.contains(".")) number = number.replace(".", ""); // e.g 4. A Boy.. will turn to just 4
         try {
             q_number = Integer.parseInt(number);
-        } catch (NumberFormatException e ){
+        } catch (NumberFormatException e) {
             String message = "Error : it seems the number : " + "\"" + number + "\"" +
-                                " at line " + line_count + " Seems to be incompatible \n " +
-                            readLine;
-           throw new IncompatibleQuestionException(message);
+                    " at line " + line_count + " Seems to be incompatible \n " +
+                    readLine;
+            throw new IncompatibleQuestionException(message);
         }
         //if Number is parsed successfully then question should be parsed next
+        //line 32 is not appropriately addressed
 
-        List<String> optionList =  new ArrayList<>();
+        List<String> optionList = new ArrayList<>();
         StringBuilder questionStringBuilder = new StringBuilder();
         StringBuilder optionStringBuilder = new StringBuilder();
         String token;
         int optionCount = 0, optionTracker = 0;
         boolean optionNotEncountered = true; // no option reached yet
 
-        while(questionParser.hasNext()) {
+        while (questionParser.hasNext()) {
             token = questionParser.next();
-            if(token.matches("[^\\w]?[a-eA-E][^\\w]?") && token.length() !=1){ //if (a. is found, or similar
-                 optionCount++;
+            if (token.matches("[^\\w]?[a-eA-E][^\\w]?") && token.length() != 1) { //if (a. is found, or similar
+                optionCount++;
                 //todo: add more than here
-                errorHandler(readLine, optionCount, modal_question_count, line_count,true);
+                errorHandler(readLine, optionCount, modal_question_count, line_count, true);
                 //a quick glance at the code should make you understand the above line
 
                 //option might be found
                 optionNotEncountered = false;
-            }else{
-                if(optionNotEncountered){
+            } else {
+                if (optionNotEncountered) {
                     questionStringBuilder.append(token).append(" ");
-                }else{
-                    if(optionCount > optionTracker){
+                } else {
+                    if (optionCount > optionTracker) {
                         /*
                         If a new question is encountered, add the previous tokens up
                         and then  clear the former question builder
@@ -210,27 +231,36 @@ public class Main {
                         }
                         optionStringBuilder.append(token).append(" ");
                         optionTracker++;
-                    }else optionStringBuilder.append(token).append(" ");
+                    } else optionStringBuilder.append(token).append(" ");
                 }
             }
         }
         //To ensure the last option is always added :
         optionList.add(optionStringBuilder.toString());
 
-        boolean enableSmartFix = errorHandler(readLine.replace(number,""),optionCount,modal_question_count,line_count, false);
+        boolean enableSmartFix = errorHandler(readLine.replace(number, ""), optionCount, modal_question_count,
+                line_count, false);
         /*
         The replace number with "",ensures only the question gets sent to the smart_fix parser
          */
-        if(enableSmartFix) smartParseQuestionFromLine(readLine,modal_question_count,optionList,optionStringBuilder,questionStringBuilder, line_count);
+        if (enableSmartFix)
+            smartParseQuestionFromLine(readLine, modal_question_count, optionList, optionStringBuilder,
+                    questionStringBuilder, line_count);
         System.out.println(questionStringBuilder);
-        for(String test : optionList) System.out.println(test);
 
+        Question question = new Question();
+        question.setQuestion(questionStringBuilder.toString());
+        String [] optionArray = optionList.toArray(new String[0]);
+        question.setOptionFromOptionArray(optionArray);
+
+        questionList.add(question);
 
     }
 
     private static void smartParseQuestionFromLine(String readLine, int modal_question_count,
                                                    List<String> optionList, StringBuilder optionStringBuilder,
-                                                   StringBuilder questionStringBuilder,int linecount) throws IncompatibleQuestionException {
+                                                   StringBuilder questionStringBuilder, int linecount)
+            throws IncompatibleQuestionException {
         /*
         This method greatly resembles the 'ordinary' option parser except that it is
         a bit more out there, see the first implementation for more details
@@ -238,111 +268,150 @@ public class Main {
 
         Scanner smartQuestionParser = new Scanner(readLine);
         Scanner userInput = new Scanner(System.in);
-        List<String>  smart_optionList =  new ArrayList<>();
+        List<String> smart_optionList = new ArrayList<>();
         StringBuilder smart_questionStringBuilder = new StringBuilder();
         StringBuilder smart_optionStringBuilder = new StringBuilder();
         String smart_token = "";
-        boolean optionFound = false;
+        boolean optionFound = false, questionParserContinue = true;
         int option_count = 0, option_tracker = 0;
         StringBuilder readLineIndexHack = new StringBuilder(readLine);
-        while(smartQuestionParser.hasNext()){
+        while (smartQuestionParser.hasNext()) {
             smart_token = smartQuestionParser.next();
-            if(smart_token.matches("[^\\w]*[a-eA-E]?[^\\w]*")){
+            if(questionParserContinue)smart_questionStringBuilder.append(smart_token).append(" ");
+            if (smart_token.matches("[^\\w]*[a-eA-E]?[^\\w]*")) {
                 int index_of_zone = readLineIndexHack.indexOf(smart_token);
-                System.out.println("Is the token >" +smart_token + "< at zone >" + readLineIndexHack.substring((index_of_zone -1), (index_of_zone+2)) +
+                System.out.println("Is the token >" + smart_token + "< at zone >" + readLineIndexHack.substring((index_of_zone - 1), (index_of_zone + 2)) +
                         "< an Option. Type Y/N");
-                readLineIndexHack.delete(0,readLineIndexHack.indexOf(smart_token) +1);
+                readLineIndexHack.delete(0, readLineIndexHack.indexOf(smart_token) + 1);
 
                 System.out.println(readLine);
-                if ("y".equals(userInput.nextLine().toLowerCase())) {
-                        optionFound = true;
-                        option_count++;
+                if ("y".equalsIgnoreCase(userInput.nextLine())) {
+                    optionFound = true;
+                    questionParserContinue = false;
+                    option_count++;
                 } else {
 
                 }
-            }else if(optionFound){
-                if(option_count > option_tracker){
+            } else if (optionFound) {
+                if (option_count > option_tracker) {
                     if (option_tracker != 0) {
                         smart_optionList.add(smart_optionStringBuilder.toString());
-                       smart_optionStringBuilder.delete(0, smart_optionStringBuilder.length() - 1);
+                        smart_optionStringBuilder.delete(0, smart_optionStringBuilder.length() - 1);
                     }
                     smart_optionStringBuilder.append(smart_token).append(" ");
                     option_tracker++;
-                }else smart_optionStringBuilder.append(smart_token).append(" ");
-                }
+                } else smart_optionStringBuilder.append(smart_token).append(" ");
             }
+        }
         //To ensure the last option is always added :
         smart_optionList.add(smart_optionStringBuilder.toString());
 
-        for(String option: smart_optionList) System.out.println("Found option :" +option);
+        for (String option : smart_optionList) System.out.println("Found option :" + option);
+        System.out.println(smart_questionStringBuilder);
 
-        while(true){
+        while (true) {
             System.out.println("Are you satisfied with the result ? 1 for yes 2 for no");
             String userInputString = new Scanner(System.in).nextLine();
-            if(userInputString.matches("[1-2]")) {
+            if (userInputString.matches("[1-2]")) {
                 if ("2".equals(userInputString)) {
-                    throw new IncompatibleQuestionException("Error in line :" + linecount +   "\n" + readLine);
+                    throw new IncompatibleQuestionException("Error in line :" + linecount + "\n" + readLine);
                 }
                 break;
-            }else System.err.println("\n" + "The input \"" + userInputString +"\" is invalid, try again");
+            } else System.err.println("\n" + "The input \"" + userInputString + "\" is invalid, try again");
         }
-        }
-
+    }
 
 
     private static boolean errorHandler(String readLine, int optionCount, int modal_question_count,
-                                     int line_count, boolean checkIfGreater) throws IncompatibleQuestionException {
+                                        int line_count, boolean checkIfGreater) throws IncompatibleQuestionException {
         boolean enableSmartFix = false;
-        if((optionCount > modal_question_count) && checkIfGreater){
-            while(true){
-                System.out.println("The option count has exceeded " + modal_question_count+
-                        "At question : " + readLine +"\nAt line : " + line_count
-                        + "\nPress 1 to continue add option \nPress 2 to discard option\nPress 3 to terminate");
+        if ((optionCount > modal_question_count) && checkIfGreater) {
+            while (true) {
+                System.out.println("The option count has exceeded " + modal_question_count +
+                        "At question : " + readLine + "\nAt line : " + line_count
+                        + "\nPress 1 to continue add option \nPress 2 to discard option greater than " + modal_question_count
+                         + "\nPress 3 to terminate");
                 String userInput = new Scanner(System.in).nextLine();
-                if(userInput.matches("[1-3]")) {
-                    switch (userInput){
+                if (userInput.matches("[1-3]")) {
+                    switch (userInput) {
                         case "1":
                             break;// do nothing for case 1
                         case "2":
                             break;
                         case "3":
-                            throw new IncompatibleQuestionException("Error in line :"+ line_count +
+                            throw new IncompatibleQuestionException("Error in line :" + line_count +
                                     "\n" + readLine);
                     }
                     break;
-                }else System.err.println("\n" + "The input \"" + userInput +"\" is invalid, try again");
+                } else System.err.println("\n" + "The input \"" + userInput + "\" is invalid, try again");
             }
             //end of error handling while loop
         }// end of error handling
         boolean checkIfSmaller = !checkIfGreater;
-        if(optionCount < modal_question_count  && checkIfSmaller) {// start of error handling
-            while(true) {
+        if (optionCount < modal_question_count && checkIfSmaller) {// start of error handling
+            while (true) {
                 System.err.println("The parser could only find " + optionCount + " options in\n" +
                         "Question: " + readLine + "\nAt line " + line_count + "\n Press 1 to continue" +
-                        "\nPress 2 to attempt smartFix " +"\nPress 3 to terminate");
+                        "\nPress 2 to attempt smartFix " + "\nPress 3 to terminate");
                 System.err.println("Make sure all options have either a parenthesis or full stop after" +
                         "the option letter");
                 String input = new Scanner(System.in).nextLine();
-                if(input.matches("[1-3]")) {//multiple break statements in an if -block isn't ideal
+                if (input.matches("[1-3]")) {//multiple break statements in an if -block isn't ideal
                     // todo: refractor to using switch later and delete guiding comment
                     if (input.equals("3")) {
                         throw new IncompatibleQuestionException("Question at line :" + line_count +
                                 " doesn't have up to " + optionCount + " options\n " + "At : " +
                                 readLine);
-                    }else if(input.equals("2")) {
+                    } else if (input.equals("2")) {
                         enableSmartFix = true;
                         break;
                         // to enable the smartfix method to be called without affecting the stack
-                    }else break;
+                    } else break;
 
-                }else{
+                } else {
                     System.out.println("Please input 1-3");
                 }
             }
 
         }// end of error handling
 
-        return  enableSmartFix;
+        return enableSmartFix;
+    }
+
+    private static void saveChangesAndRewriteFile() throws IOException {
+        File rewriteFile;
+        String file_name = "\\rewriteFile.txt";
+        if(textFile.isDirectory())
+            rewriteFile = new File(textFile.getPath()+ file_name);
+        else
+            rewriteFile = new File(textFile.getParent()+ file_name);
+        rewriteFile.createNewFile();
+        StringBuilder question_line = new StringBuilder("");
+        String space = " ";
+
+        int count = 0, questionCount =1;
+        FileWriter fileWriter = new FileWriter(rewriteFile, true);
+
+        questionList.remove(questionList.size()-1);
+
+        for(Question question : questionList ){
+            char optionChar = 'A';
+            question_line.append(questionCount).append(space).append(question.getQuestion()).append(space);
+            for(String option : question.getOptionArray()){
+                if(option != null) question_line.append(optionChar++).append(".").append(" ").append(option).append(space);
+            }
+            fileWriter.append(question_line).append("\n");
+            fileWriter.append("\n");
+            fileWriter.flush();
+            question_line.replace(0,question_line.length()-1,"");
+
+            questionCount++;
+
+
+        }
+
+
+
     }
 
     private static void parseFileForLine(ParserList parserList, BufferedReader reader) throws Exception {
@@ -383,7 +452,7 @@ public class Main {
         return returnVal;
     }
 
-    private static void errorFindingFileFromPath() {
+    private static void errorFindingFileFromPath() throws IOException {
         System.out.println("An error has occurred finding the specified file... try again");
         for (int i = 0; i < 2; i++) {
             System.out.println();// Lol, sometimes i want to be funny, life is short
