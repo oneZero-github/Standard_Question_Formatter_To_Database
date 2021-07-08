@@ -9,7 +9,7 @@ public class Main {
     private static final int isFile = 2;
     private static final int isError = 3;
     private static File textFile;
-    private  static List<Question> questionList;
+    private static List<Question> questionList;
 
 
     public static void main(String[] args) {
@@ -25,9 +25,9 @@ public class Main {
         //for now main will serve as the GUI
 
         setUpInterface();
-        try{
+        try {
             askUserForFile();
-        }catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -161,24 +161,21 @@ public class Main {
             String dialogQuestion = "Do you want to rewrite the file using the successfully parsed questions\n" +
                     "This saves changes from smart fix\nPress 1 for yes\n 2 for no";
 
-                while (true) {
-                    System.out.println(dialogQuestion);
-                    userInput = scanner.nextLine();
-                    if (userInput.matches("[1-2]")) {
-                        if(userInput.equals("1")) saveChangesAndRewriteFile();
-                           break;
-                    } else System.err.println("\n" + "The input \"" + userInput +
-                            "\" is invalid, try again");
-                }
+            while (true) {
+                System.out.println(dialogQuestion);
+                userInput = scanner.nextLine();
+                if (userInput.matches("[1-2]")) {
+                    if (userInput.equals("1")) saveChangesAndRewriteFile();
+                    break;
+                } else System.err.println("\n" + "The input \"" + userInput +
+                        "\" is invalid, try again");
+            }
 
         } catch (Exception e) {
             System.out.println("Oops, an error has occurred,  see stack trace below");
             e.printStackTrace();
         }
     }
-
-
-
 
     private static void parseQuestionFromLine(String readLine, int line_count, int modal_question_count)
             throws IncompatibleQuestionException {
@@ -196,7 +193,7 @@ public class Main {
             throw new IncompatibleQuestionException(message);
         }
         //if Number is parsed successfully then question should be parsed next
-        //line 32 is not appropriately addressed
+    readLine.replace(number, "");// removing the number from the question tag
 
         List<String> optionList = new ArrayList<>();
         StringBuilder questionStringBuilder = new StringBuilder();
@@ -246,14 +243,21 @@ public class Main {
         if (enableSmartFix)
             smartParseQuestionFromLine(readLine, modal_question_count, optionList, optionStringBuilder,
                     questionStringBuilder, line_count);
+        else generateQuestionList(questionStringBuilder, optionList);
+
         System.out.println(questionStringBuilder);
 
+    }
+
+    private static void generateQuestionList(StringBuilder questionStringBuilder, List<String> optionList) {
         Question question = new Question();
         question.setQuestion(questionStringBuilder.toString());
-        String [] optionArray = optionList.toArray(new String[0]);
+        String[] optionArray = optionList.toArray(new String[0]);
         question.setOptionFromOptionArray(optionArray);
-
         questionList.add(question);
+
+        //bug note: Shit just isnt working, stupid piece of shit!
+        //update: bug squashed, lol who is your daddy!
 
     }
 
@@ -277,10 +281,11 @@ public class Main {
         StringBuilder readLineIndexHack = new StringBuilder(readLine);
         while (smartQuestionParser.hasNext()) {
             smart_token = smartQuestionParser.next();
-            if(questionParserContinue)smart_questionStringBuilder.append(smart_token).append(" ");
-            if (smart_token.matches("[^\\w]*[a-eA-E]?[^\\w]*")) {
+            if (questionParserContinue) smart_questionStringBuilder.append(smart_token).append(" ");
+            if (smart_token.matches("[^\\w]*[a-eA-E]?[^\\w]*") ) {
                 int index_of_zone = readLineIndexHack.indexOf(smart_token);
-                System.out.println("Is the token >" + smart_token + "< at zone >" + readLineIndexHack.substring((index_of_zone - 1), (index_of_zone + 2)) +
+                System.out.println("Is the token >" + smart_token + "< at zone >" +
+                        readLineIndexHack.substring((index_of_zone - 1), (index_of_zone + 2)) +
                         "< an Option. Type Y/N");
                 readLineIndexHack.delete(0, readLineIndexHack.indexOf(smart_token) + 1);
 
@@ -313,6 +318,7 @@ public class Main {
             System.out.println("Are you satisfied with the result ? 1 for yes 2 for no");
             String userInputString = new Scanner(System.in).nextLine();
             if (userInputString.matches("[1-2]")) {
+                generateQuestionList(questionStringBuilder, smart_optionList);
                 if ("2".equals(userInputString)) {
                     throw new IncompatibleQuestionException("Error in line :" + linecount + "\n" + readLine);
                 }
@@ -330,7 +336,7 @@ public class Main {
                 System.out.println("The option count has exceeded " + modal_question_count +
                         "At question : " + readLine + "\nAt line : " + line_count
                         + "\nPress 1 to continue add option \nPress 2 to discard option greater than " + modal_question_count
-                         + "\nPress 3 to terminate");
+                        + "\nPress 3 to terminate");
                 String userInput = new Scanner(System.in).nextLine();
                 if (userInput.matches("[1-3]")) {
                     switch (userInput) {
@@ -379,36 +385,39 @@ public class Main {
     }
 
     private static void saveChangesAndRewriteFile() throws IOException {
+
+        //This part c
         File rewriteFile;
         String file_name = "\\rewriteFile.txt";
-        if(textFile.isDirectory())
-            rewriteFile = new File(textFile.getPath()+ file_name);
+        if (textFile.isDirectory())
+            rewriteFile = new File(textFile.getPath() + file_name);
         else
-            rewriteFile = new File(textFile.getParent()+ file_name);
+            rewriteFile = new File(textFile.getParent() + file_name);
         rewriteFile.createNewFile();
         StringBuilder question_line = new StringBuilder("");
         String space = " ";
 
-        int count = 0, questionCount =1;
+        int count = 0, questionCount = 1;
         FileWriter fileWriter = new FileWriter(rewriteFile, true);
 
-        questionList.remove(questionList.size()-1);
+        questionList.remove(questionList.size() - 1);
 
-        for(Question question : questionList ){
-            char optionChar = 'A';
-            question_line.append(questionCount).append(space).append(question.getQuestion()).append(space);
-            for(String option : question.getOptionArray()){
-                if(option != null) question_line.append(optionChar++).append(".").append(" ").append(option).append(space);
+        for (Question question : questionList) {
+            if (question != null) {
+                char optionChar = 'A';
+                question_line.append(questionCount).append(space).append(question.getQuestion()).append(space);
+                for (String option : question.getOptionArray()) {
+                    question_line.append(optionChar++).append(".").append(" ").append(option).append(space);
+                }
+                fileWriter.append(question_line).append("\n");
+                fileWriter.append("\n");
+                fileWriter.flush();
+                question_line.replace(0, question_line.length() - 1, "");
+
+                questionCount++;
             }
-            fileWriter.append(question_line).append("\n");
-            fileWriter.append("\n");
-            fileWriter.flush();
-            question_line.replace(0,question_line.length()-1,"");
-
-            questionCount++;
-
-
         }
+        fileWriter.close();
 
 
 
