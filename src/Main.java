@@ -1,6 +1,9 @@
+//TODO
+//readme : current bug lies  in the append space problem
+
+
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
@@ -14,6 +17,7 @@ public class Main {
 
     public static void main(String[] args) {
         //Todo : Make a GUI of this stuff later
+        //Todo : regarding the upper todo, gui can be implemented slowly. with things like dialog boxes etc
 
         /*
             @Author : Gideon Kane M.
@@ -270,49 +274,76 @@ public class Main {
         a bit more out there, see the first implementation for more details
          */
 
-        Scanner smartQuestionParser = new Scanner(readLine);
-        Scanner userInput = new Scanner(System.in);
-        List<String> smart_optionList = new ArrayList<>();
-        StringBuilder smart_questionStringBuilder = new StringBuilder();
-        StringBuilder smart_optionStringBuilder = new StringBuilder();
-        String smart_token = "";
-        boolean optionFound = false, questionParserContinue = true;
-        int option_count = 0, option_tracker = 0;
-        StringBuilder readLineIndexHack = new StringBuilder(readLine);
-        while (smartQuestionParser.hasNext()) {
-            smart_token = smartQuestionParser.next();
-            if (questionParserContinue) smart_questionStringBuilder.append(smart_token).append(" ");
-            if (smart_token.matches("[^\\w]*[a-eA-E]?[^\\w]*") ) {
-                int index_of_zone = readLineIndexHack.indexOf(smart_token);
-                System.out.println("Is the token >" + smart_token + "< at zone >" +
-                        readLineIndexHack.substring((index_of_zone - 1), (index_of_zone + 2)) +
-                        "< an Option. Type Y/N");
-                readLineIndexHack.delete(0, readLineIndexHack.indexOf(smart_token) + 1);
+        boolean loopThis = false;
+        List<String> smart_optionList;
 
-                System.out.println(readLine);
-                if ("y".equalsIgnoreCase(userInput.nextLine())) {
-                    optionFound = true;
-                    questionParserContinue = false;
-                    option_count++;
-                } else {
+        do {
+            loopThis = false;
+            Scanner smartQuestionParser = new Scanner(readLine);
+            Scanner userInput = new Scanner(System.in);
+            smart_optionList = new ArrayList<>();
+            StringBuilder smart_questionStringBuilder = new StringBuilder();
+            StringBuilder smart_optionStringBuilder = new StringBuilder();
+            String smart_token = "";
+            boolean optionFound = false, questionParserContinue = true;
+            int option_count = 0, option_tracker = 0;
+            StringBuilder readLineIndexHack = new StringBuilder(readLine);
+            while (smartQuestionParser.hasNext()) {
+                smart_token = smartQuestionParser.next();
+                if (questionParserContinue) smart_questionStringBuilder.append(smart_token).append(" ");
 
-                }
-            } else if (optionFound) {
-                if (option_count > option_tracker) {
-                    if (option_tracker != 0) {
-                        smart_optionList.add(smart_optionStringBuilder.toString());
-                        smart_optionStringBuilder.delete(0, smart_optionStringBuilder.length() - 1);
+                if (smart_token.matches("[^\\w]*[a-eA-E]?[^\\w]*")) {
+                    int index_of_zone = readLineIndexHack.indexOf(smart_token);
+                    System.out.println("Is the token >" + smart_token + "< at zone >" +
+                            readLineIndexHack.substring((index_of_zone - 1), (index_of_zone + 2)) +
+                            "< an Option. Type Y/N");
+
+
+                    readLineIndexHack.delete(0, readLineIndexHack.indexOf(smart_token) + 1);
+
+                    System.out.println(readLine);
+                    if ("y".equalsIgnoreCase(userInput.nextLine())) {
+                        optionFound = true;
+                        questionParserContinue = false;
+                        option_count++;
+                    } else {
+
                     }
-                    smart_optionStringBuilder.append(smart_token).append(" ");
-                    option_tracker++;
-                } else smart_optionStringBuilder.append(smart_token).append(" ");
-            }
-        }
-        //To ensure the last option is always added :
-        smart_optionList.add(smart_optionStringBuilder.toString());
 
-        for (String option : smart_optionList) System.out.println("Found option :" + option);
-        System.out.println(smart_questionStringBuilder);
+
+                } else if (optionFound) {
+                    if (option_count > option_tracker) {
+                        if (option_tracker != 0) {
+                            smart_optionList.add(smart_optionStringBuilder.toString());
+                            smart_optionStringBuilder.delete(0, smart_optionStringBuilder.length() - 1);
+                        }
+                        smart_optionStringBuilder.append(smart_token).append(" ");
+                        option_tracker++;
+                    } else smart_optionStringBuilder.append(smart_token).append(" ");
+                }
+            }
+            //To ensure the last option is always added :
+            smart_optionList.add(smart_optionStringBuilder.toString());
+
+            for (String option : smart_optionList) System.out.println("Found option :" + option);
+            System.out.println(smart_questionStringBuilder);
+
+            //check if the problem is just no space after option e.g A.cholesterol
+            if (smart_optionList.size() < 4) {
+                System.out.println("Is the problem a conjoined option tag and content" +
+                        " in just a single option? ");
+                String userInputString = userInput.nextLine();
+                if (userInputString.toLowerCase().contains("y")) {
+                    System.out.println();
+                    System.out.println("Input the index you want the space to be appended to");
+                    int append = userInput.nextInt();
+                    StringBuilder readlineBuilder = new StringBuilder(readLine);
+                    readlineBuilder.insert(append, " ");
+                    readLine = readlineBuilder.toString();
+                    loopThis = true;
+                }
+            }
+        }while(loopThis);
 
         while (true) {
             System.out.println("Are you satisfied with the result ? 1 for yes 2 for no");
