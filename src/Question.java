@@ -1,5 +1,13 @@
 import java.io.Serializable;
+/*
+        todo: This class Question should be a universal class, any 'copy' of this class should
+todo: the same implementation, as such, a figure would be attached to show class version and compatibility,
+        todo: maybe using it as module or some shit like that would work
+ */
 
+/*
+todo: Question verson 1.0
+ */
 public class Question implements Serializable {
 
     private String question;
@@ -21,6 +29,7 @@ public class Question implements Serializable {
         this.optionD = optionD;
         this.correctOption = correctOption;
     }
+
     public Question() {
         optionArrayInitialised = false;
     }
@@ -94,28 +103,26 @@ public class Question implements Serializable {
         optionC = optionArray[2];
         optionD = optionArray[3];
 
-        if(options.length > 4) optionE = optionArray[4];
+        if (options.length > 4) optionE = optionArray[4];
         optionArrayInitialised = true;
         return 1;
 
     }
 
-    public String[] getOptionArray(){
+    public String[] getOptionArray() {
         return optionArray;
     }
 
-    public int generateArrayFromOptionArray(){
+    public void generateArrayFromOption() {
+        //todo: a bug might appear here, resolve later
+        optionArray[0] = optionA;
+        optionArray[1] = optionB;
+        optionArray[2] = optionC;
+        optionArray[3] = optionD;
 
-        if (optionArrayInitialised) {
-            optionArray[0] = optionA;
-            optionArray[1] = optionB;
-            optionArray[2] = optionC;
-            optionArray[3] = optionD;
-
-            if(optionArray.length > 4) optionE = optionArray[4];
-        } else return  -1;
-        return  0;
+        if (optionE != null) optionE = optionArray[4];
     }
+
 
     public int getAnsweredOption() {
         return answeredOption;
@@ -163,6 +170,18 @@ public class Question implements Serializable {
 
     public void setCourseName(String courseName) {
         this.courseName = courseName;
+    }
+
+    @Override
+    public String toString() {
+        return "Question{" +
+                "question='" + question + '\'' +
+                ", optionA='" + optionA + '\'' +
+                ", optionB='" + optionB + '\'' +
+                ", optionC='" + optionC + '\'' +
+                ", optionD='" + optionD + '\'' +
+                ", optionE='" + optionE + '\'' +
+                '}';
     }
 }
 

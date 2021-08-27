@@ -1,6 +1,10 @@
-//TODO
-//readme : current bug lies  in the append space problem
+//TODO : This class needs proper documentation
+/*
+Todo : delete leading and trailing spaces
+todo delete all variables prefixed with 'tools_', they are inefficient and for creation processes only
 
+todo : method for further processing of questions
+ */
 
 import java.io.*;
 import java.util.ArrayList;
@@ -25,15 +29,23 @@ public class Main {
             version of a database maker for the nova project which wll
             soon be ported to all platforms. I will try to make this as generic as possible so i can port to other
             implementations and frameworks
+
+            August 23rd here, can't believe this project is 3 months old already
          */
         //for now main will serve as the GUI
 
         setUpInterface();
+
         try {
             askUserForFile();
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        for (Question question : questionList)
+            System.out.println(question.toString());
+        FileMaker.generateDatabaseFromList(questionList);
+
     }
 
     private static void askUserForFile() throws IOException {
@@ -60,7 +72,6 @@ public class Main {
     }
 
     private static void setUpInterface() {
-
     }
 
     private static void formatFromDirectory(File textFile) throws IOException {
@@ -79,17 +90,14 @@ public class Main {
             System.out.println(fileIndexCount++ + " :" + file.getName());
         }
 
-        //Todo : create method to iterate through all files
-
         System.out.println();
-
         for (File file : textFilesList) {
             formatFromFile(file);
         }
     }
 
-    private static void formatFromFile(File textFile) throws IOException {
-        String file_name = textFile.getName();
+    private static void formatFromFile(File questionFile) throws IOException {
+        String file_name = questionFile.getName();
         System.out.println();
         Scanner scanner = new Scanner(System.in);
         System.out.println("Format file " + file_name + " ?");
@@ -103,14 +111,13 @@ public class Main {
         System.out.println();
         System.out.println("Formatting process beginning for " + file_name);
 
-
         //main job
         try {
             /*
             The parser Class is just a class that contains a list of requirements to look out for while parsing
             View, Add or Delete requirements from the parser class
              */
-            parseFileForLine(new ParserList(), new BufferedReader(new FileReader(textFile)));
+            parseFileForLine(new ParserList(), new BufferedReader(new FileReader(questionFile)));
             //Todo: Continue Scanning even though an error is found, to show all possible errors
 
             /*
@@ -120,6 +127,13 @@ public class Main {
 
             // if scanning is successful, then continue with code
             int modal_number_of_options;
+            System.out.println("Launch NumberEditor  ?");
+            userInput = scanner.nextLine();
+            if (userInput.matches("yes")) {
+                questionFile = FileMaker.numberEditor(questionFile);
+            }
+
+
             while (true) {
                 System.out.println("Please input the modal number of options per question >>>");
                 userInput = scanner.nextLine();
@@ -130,17 +144,15 @@ public class Main {
                         "\" is invalid, try again");
             }
 
-            BufferedReader reader = new BufferedReader(new FileReader(textFile));
-            String readLine = "";
+            BufferedReader reader = new BufferedReader(new FileReader(questionFile));
+            String readLine;
             String courseName = reader.readLine().replace("Course Name: ", "");
             String courseYear = reader.readLine().replace("Course Year: ", "");
             String version = reader.readLine().replace("Version: ", "");
             //at this point, line count should be at least 3
 
-
             int line_count = 3;
             boolean file_reached_end = false;
-
             questionList = new ArrayList<>();
 
             while (((readLine = reader.readLine()) != null) && !file_reached_end) {
@@ -259,15 +271,11 @@ public class Main {
         String[] optionArray = optionList.toArray(new String[0]);
         question.setOptionFromOptionArray(optionArray);
         questionList.add(question);
-
-        //bug note: Shit just isnt working, stupid piece of shit!
-        //update: bug squashed, lol who is your daddy!
-
     }
 
     private static void smartParseQuestionFromLine(String readLine, int modal_question_count,
                                                    List<String> optionList, StringBuilder optionStringBuilder,
-                                                   StringBuilder questionStringBuilder, int linecount)
+                                                   StringBuilder questionStringBuilder, int lineCount)
             throws IncompatibleQuestionException {
         /*
         This method greatly resembles the 'ordinary' option parser except that it is
@@ -284,20 +292,26 @@ public class Main {
             smart_optionList = new ArrayList<>();
             StringBuilder smart_questionStringBuilder = new StringBuilder();
             StringBuilder smart_optionStringBuilder = new StringBuilder();
-            String smart_token = "";
+            String smart_token;
             boolean optionFound = false, questionParserContinue = true;
             int option_count = 0, option_tracker = 0;
+
+            //There is a bug because the readLineHack index doesn't follow the readLine Scanner
+            //hence the introduction of a new variable to keep track
+            int readLineHackCounter = -1;
+            String zone;
+            // todo: make word counter and return a=word and surrounding
             StringBuilder readLineIndexHack = new StringBuilder(readLine);
             while (smartQuestionParser.hasNext()) {
+                readLineHackCounter++; //
                 smart_token = smartQuestionParser.next();
                 if (questionParserContinue) smart_questionStringBuilder.append(smart_token).append(" ");
 
                 if (smart_token.matches("[^\\w]*[a-eA-E]?[^\\w]*")) {
-                    int index_of_zone = readLineIndexHack.indexOf(smart_token);
-                    System.out.println("Is the token >" + smart_token + "< at zone >" +
-                            readLineIndexHack.substring((index_of_zone - 1), (index_of_zone + 2)) +
-                            "< an Option. Type Y/N");
+                    zone = readLine.split(" ")[readLineHackCounter];
 
+                    int index_of_zone = readLineIndexHack.indexOf(smart_token);
+                    System.out.println("Is the token " + smart_token + " an option? Type Y/N");
 
                     readLineIndexHack.delete(0, readLineIndexHack.indexOf(smart_token) + 1);
 
@@ -309,7 +323,6 @@ public class Main {
                     } else {
 
                     }
-
 
                 } else if (optionFound) {
                     if (option_count > option_tracker) {
@@ -337,9 +350,9 @@ public class Main {
                     System.out.println();
                     System.out.println("Input the index you want the space to be appended to");
                     int append = userInput.nextInt();
-                    StringBuilder readlineBuilder = new StringBuilder(readLine);
-                    readlineBuilder.insert(append, " ");
-                    readLine = readlineBuilder.toString();
+                    StringBuilder readLineBuilder = new StringBuilder(readLine);
+                    readLineBuilder.insert(append, " ");
+                    readLine = readLineBuilder.toString();
                     loopThis = true;
                 }
             }
@@ -351,13 +364,12 @@ public class Main {
             if (userInputString.matches("[1-2]")) {
                 generateQuestionList(questionStringBuilder, smart_optionList);
                 if ("2".equals(userInputString)) {
-                    throw new IncompatibleQuestionException("Error in line :" + linecount + "\n" + readLine);
+                    throw new IncompatibleQuestionException("Error in line :" + lineCount + "\n" + readLine);
                 }
                 break;
             } else System.err.println("\n" + "The input \"" + userInputString + "\" is invalid, try again");
         }
     }
-
 
     private static boolean errorHandler(String readLine, int optionCount, int modal_question_count,
                                         int line_count, boolean checkIfGreater) throws IncompatibleQuestionException {
@@ -394,7 +406,7 @@ public class Main {
                         "the option letter");
                 String input = new Scanner(System.in).nextLine();
                 if (input.matches("[1-3]")) {//multiple break statements in an if -block isn't ideal
-                    // todo: refractor to using switch later and delete guiding comment
+                    // todo: refactor to using switch later and delete guiding comment
                     if (input.equals("3")) {
                         throw new IncompatibleQuestionException("Question at line :" + line_count +
                                 " doesn't have up to " + optionCount + " options\n " + "At : " +
@@ -402,7 +414,7 @@ public class Main {
                     } else if (input.equals("2")) {
                         enableSmartFix = true;
                         break;
-                        // to enable the smartfix method to be called without affecting the stack
+                        // to enable the smart fix method to be called without affecting the stack
                     } else break;
 
                 } else {
@@ -411,7 +423,6 @@ public class Main {
             }
 
         }// end of error handling
-
         return enableSmartFix;
     }
 
@@ -425,7 +436,7 @@ public class Main {
         else
             rewriteFile = new File(textFile.getParent() + file_name);
         rewriteFile.createNewFile();
-        StringBuilder question_line = new StringBuilder("");
+        StringBuilder question_line = new StringBuilder();
         String space = " ";
 
         int count = 0, questionCount = 1;
@@ -444,13 +455,10 @@ public class Main {
                 fileWriter.append("\n");
                 fileWriter.flush();
                 question_line.replace(0, question_line.length() - 1, "");
-
                 questionCount++;
             }
         }
         fileWriter.close();
-
-
 
     }
 
@@ -469,7 +477,6 @@ public class Main {
         for (String checker : parseList)
             if (!checker.equalsIgnoreCase("found"))
                 throw new IncompatibleFileException(checker + " Not found");
-
         reader.close(); // free up resources
     }
 
@@ -488,7 +495,6 @@ public class Main {
         }
 
         System.out.println(returnVal);
-
         return returnVal;
     }
 
