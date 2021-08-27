@@ -6,7 +6,7 @@ todo: the same implementation, as such, a figure would be attached to show class
  */
 
 /*
-todo: Question verson 1.0
+todo: Question version 2.0
  */
 public class Question implements Serializable {
 
@@ -16,22 +16,14 @@ public class Question implements Serializable {
     private String optionC;
     private String optionD;
     private String optionE;
-    private String[] optionArray; // for conveniences
+    private final String[] optionArray;
     private int answeredOption, correctOption;
     private boolean questionEntered, optionArrayInitialised;
     private String correctOptionString, reason, yearOfCourse, courseName;
 
-    public Question(String question, String optionA, String optionB, String optionC, String optionD, int correctOption) {
-        this.question = question;
-        this.optionA = optionA;
-        this.optionB = optionB;
-        this.optionC = optionC;
-        this.optionD = optionD;
-        this.correctOption = correctOption;
-    }
-
     public Question() {
         optionArrayInitialised = false;
+        optionArray = new String[5];
     }
 
     public boolean isQuestionEntered() {
@@ -90,11 +82,9 @@ public class Question implements Serializable {
         this.optionE = optionE;
     }
 
-    public int setOptionFromOptionArray(String [] options){
-        if (options.length  < 4) return -1;
-        optionArray = new String [options.length];
+    public void setOptionFromArray(String[] options) {
         int count = 0;
-        for(String option: options){
+        for (String option : options) {
             optionArray[count] = option;
             count++;
         }
@@ -102,11 +92,8 @@ public class Question implements Serializable {
         optionB = optionArray[1];
         optionC = optionArray[2];
         optionD = optionArray[3];
-
-        if (options.length > 4) optionE = optionArray[4];
+        optionE = optionArray[4];
         optionArrayInitialised = true;
-        return 1;
-
     }
 
     public String[] getOptionArray() {
@@ -114,15 +101,20 @@ public class Question implements Serializable {
     }
 
     public void generateArrayFromOption() {
-        //todo: a bug might appear here, resolve later
         optionArray[0] = optionA;
         optionArray[1] = optionB;
         optionArray[2] = optionC;
         optionArray[3] = optionD;
 
         if (optionE != null) optionE = optionArray[4];
+        optionArrayInitialised = true;
     }
 
+    public int optionInitialisedCount() {
+        int count = 0;
+        for (String s : optionArray) if (s != null) count++;
+        return count;
+    }
 
     public int getAnsweredOption() {
         return answeredOption;
