@@ -1,7 +1,7 @@
 import java.io.*;
 import java.util.List;
 
-public class FileMaker {
+public class FileHandler {
     //todo : update the writer and reader to handle more years, so for now, this is a skeletal implementation
 
     static void generateDatabaseFromList(List<Question> questionList) {
