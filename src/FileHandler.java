@@ -3,12 +3,14 @@ import java.util.List;
 
 public class FileHandler {
     //todo : update the writer and reader to handle more years, so for now, this is a skeletal implementation
+    private static int counter = 0;
 
     static void generateDatabaseFromList(List<Question> questionList) {
         String newLine = "\n";
         try {
+            int random = (int) (Math.random() * 100);
             File questionText = new File("C:\\Users\\HiddenLeaf\\Desktop\\CodeLab\\AndroidProjects\\" +
-                    "NovaDataBase\\DataBaseTextFiles\\questionOutput.txt");
+                    "NovaDataBase\\DataBaseTextFiles\\questionOutput" + random + ".txt");
             questionText.createNewFile();
 
             PrintWriter printWriter = new PrintWriter(questionText);

@@ -1,6 +1,8 @@
 public class IncompatibleQuestionException extends Exception {
 
-    public IncompatibleQuestionException(String message) {
+    public static final int QUESTION_NUMBERING_ERROR = 1;
+
+    public IncompatibleQuestionException(String message, int error) {
         super(message);
     }
 

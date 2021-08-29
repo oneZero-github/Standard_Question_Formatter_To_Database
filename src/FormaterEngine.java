@@ -5,6 +5,8 @@ todo delete all variables prefixed with 'tools_', they are inefficient and for c
 
 todo : method for further processing of questions
  */
+//todo Solve the issue of leading and trailing spaces
+//todo : work on saving edited files
 
 import java.io.*;
 import java.util.ArrayList;
@@ -37,19 +39,53 @@ public class FormaterEngine {
     private boolean isError = false;
     private static List<Question> questionList;
     private int modal_option_count;
+    private TextViewListener textViewListener;
 
 
     public FormaterEngine(String directory) {
         validateFilePath(directory);
     }
 
-    private static void showCorrectQuestionDialog(String readLine) {
-        GUI_DIALOG gui_dialog = new GUI_DIALOG(readLine);
-        try {
-            gui_dialog.drawDefaultJFrame();
-        } catch (Exception e) {
+    private static Question questionParserEngine(Scanner questionParser) throws IncompatibleQuestionException {
+        List<String> optionList = new ArrayList<>();
+        StringBuilder questionStringBuilder = new StringBuilder();
+        StringBuilder optionStringBuilder = new StringBuilder();
+        String token;
+        int optionCount = 0, optionTracker = 0;
+        boolean optionNotEncountered = true; // no option reached yet
 
+        while (questionParser.hasNext()) {
+            token = questionParser.next();
+            if (token.matches("[^\\w]?[a-eA-E][^\\w]?") && token.length() != 1) { //if (a. is found, or similar
+                optionCount++;
+                optionNotEncountered = false;
+            } else {
+                if (optionNotEncountered) {
+                    questionStringBuilder.append(token).append(" ");
+                } else {
+                    if (optionCount > optionTracker) {
+                        /*
+                        If a new question is encountered, add the previous tokens up
+                        and then  clear the former question builder
+                         */
+                        //keeping up with the count :)
+                        if (optionTracker != 0) {
+                            optionList.add(optionStringBuilder.toString());
+                            optionStringBuilder.delete(0, optionStringBuilder.length() - 1);
+                        }
+                        optionStringBuilder.append(token).append(" ");
+                        optionTracker++;
+                    } else optionStringBuilder.append(token).append(" ");
+                }
+            }
         }
+        //To ensure the last option is always added :
+        optionList.add(optionStringBuilder.toString());
+        return generateQuestion(questionStringBuilder.toString(), optionList);
+    }
+
+    public void setTextViewListener(TextViewListener textViewListener) {
+        this.textViewListener = textViewListener;
     }
 
     private static void saveChangesAndRewriteFile() throws IOException {
@@ -92,28 +128,8 @@ public class FormaterEngine {
         return isFile || isDirectory;
     }
 
-    private static void parseQuestionFromLine(String readLine, int line_count, int modal_option_count)
-            throws IncompatibleQuestionException {
-        Scanner questionParser = new Scanner(readLine);
-        //readLine should be a question, all questions should start with a number
-        int q_number = 0;
-        String number = questionParser.next();
-        if (number.contains(".")) number = number.replace(".", ""); // e.g 4. A Boy.. will turn to just 4
-        try {
-            q_number = Integer.parseInt(number);
-        } catch (NumberFormatException e) {
-            String message = "Error : it seems the number : " + "\"" + number + "\"" +
-                    " at line " + line_count + " Seems to be incompatible \n " +
-                    readLine;
-            throw new IncompatibleQuestionException(message);
-        }
-        readLine.replace(number, "");
-        Question question = questionParserEngine(questionParser);
-
-        if (errorHandler(question, modal_option_count))
-            showCorrectQuestionDialog(readLine);
-
-        else generateQuestionList(question);
+    private String showCorrectQuestionDialog(String readLine) {
+        return textViewListener.updateTextView(readLine);
     }
 
     public List<File> getDirectoryList() throws IOException {
@@ -133,42 +149,28 @@ public class FormaterEngine {
         return textFilesList;
     }
 
-    private static Question questionParserEngine(Scanner questionParser) {
-        List<String> optionList = new ArrayList<>();
-        StringBuilder questionStringBuilder = new StringBuilder();
-        StringBuilder optionStringBuilder = new StringBuilder();
-        String token;
-        int optionCount = 0, optionTracker = 0;
-        boolean optionNotEncountered = true; // no option reached yet
-
-        while (questionParser.hasNext()) {
-            token = questionParser.next();
-            if (token.matches("[^\\w]?[a-eA-E][^\\w]?") && token.length() != 1) { //if (a. is found, or similar
-                optionCount++;
-                optionNotEncountered = false;
-            } else {
-                if (optionNotEncountered) {
-                    questionStringBuilder.append(token).append(" ");
-                } else {
-                    if (optionCount > optionTracker) {
-                        /*
-                        If a new question is encountered, add the previous tokens up
-                        and then  clear the former question builder
-                         */
-                        //keeping up with the count :)
-                        if (optionTracker != 0) {
-                            optionList.add(optionStringBuilder.toString());
-                            optionStringBuilder.delete(0, optionStringBuilder.length() - 1);
-                        }
-                        optionStringBuilder.append(token).append(" ");
-                        optionTracker++;
-                    } else optionStringBuilder.append(token).append(" ");
-                }
-            }
+    private Question parseQuestionFromLine(String readLine, int line_count, int modal_option_count)
+            throws IncompatibleQuestionException {
+        Scanner questionParser = new Scanner(readLine);
+        //readLine should be a question, all questions should start with a number
+        int q_number = 0;
+        String number = questionParser.next();
+        String numberNum = "";
+        if (number.contains(".")) numberNum = number.replace(".", ""); // e.g 4. A Boy.. will turn to just 4
+        try {
+            q_number = Integer.parseInt(numberNum);
+        } catch (NumberFormatException e) {
+            String message = "Error : it seems the number : " + "\"" + number + "\"" +
+                    " at line " + line_count + " Seems to be incompatible \n " +
+                    readLine;
+            throw new IncompatibleQuestionException(message, IncompatibleQuestionException.QUESTION_NUMBERING_ERROR);
         }
-        //To ensure the last option is always added :
-        optionList.add(optionStringBuilder.toString());
-        return generateQuestion(questionStringBuilder.toString(), optionList);
+
+        readLine = readLine.replace(number, "").trim();
+
+
+        return questionParserEngine(questionParser);
+
     }
 
     private static Question generateQuestion(String questionString, List<String> optionList) {
@@ -187,7 +189,7 @@ public class FormaterEngine {
         return question.optionInitialisedCount() < normalOptionCount;
     }
 
-    public void formatFromFile(File questionFile) throws IOException {
+    public void formatFromFile(File questionFile) throws IOException, IncompatibleQuestionException {
         String file_name = questionFile.getName();
         System.out.println();
         System.out.println("Formatting process beginning for " + file_name);
@@ -220,11 +222,21 @@ public class FormaterEngine {
             boolean file_reached_end = false;
             questionList = new ArrayList<>();
 
+            boolean questionValid = true;
+            Question question;
             while (((readLine = reader.readLine()) != null) && !file_reached_end) {
                 line_count++;
                 if (!(readLine.length() < 2)) // if the length of the line read is less than 2, then skip,
                     if (!readLine.equalsIgnoreCase("file_end")) {
-                        parseQuestionFromLine(readLine, line_count, modal_number_of_options);
+                        do {
+                            questionValid = true;
+                            question = parseQuestionFromLine(readLine, line_count, modal_number_of_options);
+
+                            if (errorHandler(question, modal_option_count)) {
+                                readLine = showCorrectQuestionDialog(readLine);
+                                questionValid = false;
+                            } else generateQuestionList(question);
+                        } while (!questionValid);
                     } else file_reached_end = true;
 
             }
@@ -236,12 +248,6 @@ public class FormaterEngine {
             System.err.println("Error occurred while parsing file, read stack trace and press enter");
             String placeholder = sc.nextLine();
             System.err.println("Ensure all parameters are satisfied");
-
-        } catch (IncompatibleQuestionException e) {
-            e.printStackTrace();
-            String dialogQuestion = "Do you want to rewrite the file using the successfully parsed questions\n" +
-                    "This saves changes from smart fix\nPress 1 for yes\n 2 for no";
-
 
         } catch (Exception e) {
             System.out.println("Oops, an error has occurred,  see stack trace below");
@@ -281,14 +287,11 @@ public class FormaterEngine {
         }
     }
 
-    private void errorFindingFileFromPath() throws IOException {
-        System.out.println("An error has occurred finding the specified file... try again");
-        for (int i = 0; i < 2; i++) {
-            System.out.println();// Lol, sometimes i want to be funny, life is short
-        }
-    }
-
     public void setModalOptionCount(int modalOptionCount) {
         modal_option_count = modalOptionCount;
+    }
+
+    public void generateFormatFile() {
+        FileHandler.generateDatabaseFromList(questionList);
     }
 }

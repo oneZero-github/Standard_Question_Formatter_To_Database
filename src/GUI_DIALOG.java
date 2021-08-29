@@ -4,7 +4,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 
-public class GUI_DIALOG implements ActionListener {
+public class GUI_DIALOG implements ActionListener, TextViewListener {
     StringBuilder backlog;
     JFrame jFrame;
     JTextField jTextField;
@@ -51,11 +51,18 @@ public class GUI_DIALOG implements ActionListener {
     private void run() throws IOException {
         String directory = getDirectory();
         FormaterEngine engine = new FormaterEngine(directory);
+        engine.setTextViewListener(this);
         if (engine.getFileState()) {
             engine.setModalOptionCount(getModalOptionCount());
             for (File file : engine.getDirectoryList()) {
-                engine.formatFromFile(file);
+                try {
+                    engine.formatFromFile(file);
+                    engine.generateFormatFile();
+                } catch (IncompatibleQuestionException e) {
+                }
             }
+
+
         } else {
 
         }
@@ -68,8 +75,7 @@ public class GUI_DIALOG implements ActionListener {
     }
 
     private String getDirectory() {
-        String s = JOptionPane.showInputDialog(null, "Enter directory");
-        return s;
+        return JOptionPane.showInputDialog(null, "Enter directory");
     }
 
     @Override
@@ -88,5 +94,12 @@ public class GUI_DIALOG implements ActionListener {
 
     public void setAnonymity(boolean b) {
         anonymity = b;
+    }
+
+    @Override
+    public String updateTextView(String message) {
+        System.out.println(message);
+        return JOptionPane.showInputDialog(null, "Please input the correct Option", message);
+
     }
 }
