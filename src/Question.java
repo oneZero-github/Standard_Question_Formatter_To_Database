@@ -17,6 +17,17 @@ public class Question implements Serializable {
     private String optionD;
     private String optionE;
     private final String[] optionArray;
+
+    private char answer;
+
+    public char getAnswer() {
+        return answer;
+    }
+
+    public void setAnswer(char answer) {
+        this.answer = answer;
+    }
+
     private int answeredOption, correctOption;
     private boolean questionEntered, optionArrayInitialised;
     private String correctOptionString, reason, yearOfCourse, courseName;

@@ -32,6 +32,7 @@ public class FileHandler {
                 printWriter.write("Option C: " + question.getOptionC() + newLine);
                 printWriter.write("Option D: " + question.getOptionD() + newLine);
                 printWriter.write("Option E: " + question.getOptionE() + newLine);
+                printWriter.write("Answer: " + question.getAnswer() + newLine);
                 printWriter.write("Reason: " + question.getReason() + newLine);
                 printWriter.write(newLine);
             }
