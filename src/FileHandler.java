@@ -3,7 +3,7 @@ import java.util.List;
 
 public class FileHandler {
     //todo : update the writer and reader to handle more years, so for now, this is a skeletal implementation
-    private static int counter = 0;
+    private static final int counter = 0;
 
     static void generateDatabaseFromList(List<Question> questionList) {
         String newLine = "\n";
@@ -50,8 +50,6 @@ public class FileHandler {
         String newFileName = oldFile.getName().replace(".txt", "") + "_editedNumber.txt";
         //oldFile.get
         File newFile = new File(oldFile.getParent() + "\\" + newFileName);
-
-
         try {
             newFile.createNewFile();
             FileReader fileReader = new FileReader(oldFile);
@@ -69,8 +67,6 @@ public class FileHandler {
             bufferedWriter.close();
             fileReader.close();
             fileWriter.close();
-
-
         } catch (Exception e) {
             e.printStackTrace();
         }

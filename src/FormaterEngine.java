@@ -155,14 +155,15 @@ public class FormaterEngine {
         //readLine should be a question, all questions should start with a number
         int q_number = 0;
         String number = questionParser.next();
-        String numberNum = "";
+        String numberNum = number;
         if (number.contains(".")) numberNum = number.replace(".", ""); // e.g 4. A Boy.. will turn to just 4
         try {
             q_number = Integer.parseInt(numberNum);
         } catch (NumberFormatException e) {
             String message = "Error : it seems the number : " + "\"" + number + "\"" +
                     " at line " + line_count + " Seems to be incompatible \n " +
-                    readLine;
+                    readLine + "\n Number is " + number + "\n NumberNum is " + numberNum;
+
             throw new IncompatibleQuestionException(message, IncompatibleQuestionException.QUESTION_NUMBERING_ERROR);
         }
 

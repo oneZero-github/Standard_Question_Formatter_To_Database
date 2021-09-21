@@ -59,6 +59,7 @@ public class GUI_DIALOG implements ActionListener, TextViewListener {
                     engine.formatFromFile(file);
                     engine.generateFormatFile();
                 } catch (IncompatibleQuestionException e) {
+
                 }
             }
 
