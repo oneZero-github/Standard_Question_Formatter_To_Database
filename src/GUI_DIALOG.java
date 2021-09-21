@@ -18,7 +18,6 @@ public class GUI_DIALOG implements ActionListener, TextViewListener {
 
     public GUI_DIALOG(String question) {
         this.question = question;
-
     }
 
     GUI_DIALOG() {
