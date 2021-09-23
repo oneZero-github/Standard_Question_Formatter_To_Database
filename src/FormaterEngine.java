@@ -28,7 +28,7 @@ import java.util.Scanner;
  */
 //for now main will serve as the GUI
 
-
+//21st September here, project is far from polished but it is complete
 public class FormaterEngine {
     private static File fileDirectory;
     private final int directory = 1;
